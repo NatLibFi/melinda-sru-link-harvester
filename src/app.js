@@ -1,15 +1,14 @@
 /* eslint-disable no-unused-vars, no-undef, no-warning-comments */
 import {promisify} from 'util';
-import {Error as ApiError, Utils} from '@natlibfi/melinda-commons';
+import {createLogger} from '@natlibfi/melinda-backend-commons';
 import {collect} from './interfaces/collect';
 import {mongoFactory, HARVESTER_JOB_STATES, VALIDATOR_JOB_STATES, IMPORTER_JOB_STATES, amqpFactory} from '@natlibfi/melinda-record-link-migration-commons';
-import {validate} from './interfaces/validate';
+import {validations} from './interfaces/validate';
 import {importToErätuonti} from './interfaces/eratuonti';
 
 export default async function ({
   apiUrl, apiUsername, apiPassword, apiClientUserAgent, mongoUrl, amqpUrl
 }) {
-  const {createLogger} = Utils;
   const logger = createLogger();
   const eratuontiConfig = {apiUrl, apiUsername, apiPassword, apiClientUserAgent};
   const mongoOperator = await mongoFactory(mongoUrl);
@@ -69,7 +68,7 @@ export default async function ({
 
     // Validate potential link data
     if (state === VALIDATOR_JOB_STATES.PENDING_VALIDATION_FILTERING || state === VALIDATOR_JOB_STATES.PROCESSING_VALIDATION_FILTERING) {
-      await validate(jobId, jobConfig, mongoOperator, amqpOperator);
+      await validations(jobId, jobConfig, mongoOperator, amqpOperator);
       return check();
     }
 

@@ -1,6 +1,5 @@
-import {Utils} from '@natlibfi/melinda-commons/';
-
-const {readEnvironmentVariable, parseBoolean} = Utils;
+import {parseBoolean} from '@natlibfi/melinda-commons/';
+import {readEnvironmentVariable} from '@natlibfi/melinda-backend-commons/';
 
 // Api client variables
 export const apiUrl = readEnvironmentVariable('API_URL');
@@ -10,8 +9,6 @@ export const apiClientUserAgent = readEnvironmentVariable('API_CLIENT_USER_AGENT
 
 // SRU variables
 export const SRU_URL = readEnvironmentVariable('SRU_URL', {defaultValue: ''});
-export const SRU_HTTP_PORT = readEnvironmentVariable('SRU_HTTP_PORT', {defaultValue: 8080, format: v => Number(v)});
-export const SRU_VERSION = readEnvironmentVariable('SRU_VERSION', {defaultValue: '2'});
 
 // Mongo variables to job
 export const mongoUrl = readEnvironmentVariable('MONGO_URI', {defaultValue: 'mongodb://127.0.0.1:27017/db'});

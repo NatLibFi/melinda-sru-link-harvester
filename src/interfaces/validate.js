@@ -1,10 +1,9 @@
 /* eslint-disable no-unused-vars */
-import {Utils} from '@natlibfi/melinda-commons';
+import {createLogger} from '@natlibfi/melinda-backend-commons';
 import {MarcRecord} from '@natlibfi/marc-record';
 import {createValidationFactory, recordActions, COMMON_JOB_STATES, VALIDATOR_JOB_STATES, IMPORTER_JOB_STATES} from '@natlibfi/melinda-record-link-migration-commons';
 
-export async function validate(jobId, jobConfig, mongoOperator, amqpOperator) {
-  const {createLogger} = Utils;
+export async function validations(jobId, jobConfig, mongoOperator, amqpOperator) {
   const logger = createLogger();
   const {filterRecordsBy} = recordActions();
 
@@ -75,6 +74,11 @@ export async function validate(jobId, jobConfig, mongoOperator, amqpOperator) {
     logger.log('info', 'Validating and filtering!');
     // Filter records
     const filteredRecords = await filterRecordsBy(marcHostRecord, records, config.ifFilter);
+
+    if (filteredRecords.length === 0) {
+      return pumpValidation(rest, marcHostRecord, records, linkedValidData);
+    }
+
     logger.log('info', `${filteredRecords.length} PASSED IF FILTER! ************************************`);
     // Validate records
     const valids = await validatePump(filteredRecords, config.validatorFilter);
@@ -120,7 +124,7 @@ export async function validate(jobId, jobConfig, mongoOperator, amqpOperator) {
       const merged = {hostRecord: linkdata.hostRecord, changes: [...filteredChanges, ...linkdata.changes], record: linkdata.record};
 
       const filteredRest = rest.filter(data => {
-        const compare = new MarcRecord(data.record);
+        const compare = new MarcRecord(data.record, {subfieldValues: false});
         const notMatch = !original.equalsTo(compare);
         return notMatch;
       });

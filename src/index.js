@@ -26,14 +26,13 @@
 *
 */
 
-import {Utils} from '@natlibfi/melinda-commons';
+import {handleInterrupt, createLogger} from '@natlibfi/melinda-backend-commons';
 import * as config from './config';
 import startApp from './app';
 
 run();
 
 async function run() {
-  const {handleInterrupt, createLogger} = Utils;
   const logger = createLogger();
 
   registerInterruptionHandlers();

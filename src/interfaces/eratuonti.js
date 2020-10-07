@@ -1,11 +1,9 @@
 /* eslint-disable no-unused-vars */
 import {promisify} from 'util';
-import {Utils} from '@natlibfi/melinda-commons';
-import {MarcRecord} from '@natlibfi/marc-record';
+import {createLogger} from '@natlibfi/melinda-backend-commons';
 import {eratuontiFactory, COMMON_JOB_STATES, IMPORTER_JOB_STATES} from '@natlibfi/melinda-record-link-migration-commons';
 
 export async function importToErätuonti(jobId, jobConfig, mongoOperator, amqpOperator, {apiUrl, apiUsername, apiPassword, apiClientUserAgent}) {
-  const {createLogger} = Utils;
   const logger = createLogger();
   const setTimeoutPromise = promisify(setTimeout);
   const {linkDataHarvesterApiProfileId} = jobConfig;

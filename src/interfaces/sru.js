@@ -1,10 +1,9 @@
 /* eslint-disable no-unused-vars, */
-import {Utils} from '@natlibfi/melinda-commons';
+import {createLogger} from '@natlibfi/melinda-backend-commons';
 import createSruClient from '@natlibfi/sru-client';
 import {MARCXML} from '@natlibfi/marc-record-serializers';
 
 export async function getLinkedInfo(sruUrl, query, offset = 0) {
-  const {createLogger, logError} = Utils;
   const logger = createLogger();
   const sruClient = createSruClient({url: sruUrl, recordSchema: 'marcxml', maxRecordsPerRequest: 500, retrieveAll: false});
   // Max records per request seems to be 50
@@ -24,14 +23,15 @@ export async function getLinkedInfo(sruUrl, query, offset = 0) {
 
   function getRecord(query, offset) {
     return new Promise((resolve, reject) => {
-      const records = [];
+      const promises = [];
       sruClient.searchRetrieve(query, {startRecord: offset})
         .on('record', xmlString => {
           logger.log('silly', 'Got Record');
-          records.push(MARCXML.from(xmlString)); // eslint-disable-line functional/immutable-data
+          promises.push(MARCXML.from(xmlString, {subfieldValues: false})); // eslint-disable-line functional/immutable-data
         })
-        .on('end', offset => {
+        .on('end', async offset => {
           logger.log('info', 'Ending queries');
+          const records = await Promise.all(promises);
           resolve({offset, records});
         })
         .on('error', err => reject(err));

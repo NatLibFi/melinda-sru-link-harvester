@@ -1,8 +1,7 @@
 /* eslint-disable no-unused-vars */
-import {Utils} from '@natlibfi/melinda-commons';
+import {createLogger} from '@natlibfi/melinda-backend-commons';
 import {format} from 'util';
 
-const {createLogger} = Utils;
 const logger = createLogger(); // eslint-disable-line no-unused-vars
 
 export function getFromRecord(from, record, collect = []) {

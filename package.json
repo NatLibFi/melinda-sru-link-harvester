@@ -20,7 +20,7 @@
 	"main": "src/index.js",
 	"scripts": {
 		"start": "node ./dist/index",
-		"start:dev": "babel-node ./src/index",
+		"start:dev": "DEBUG=@natlibfi/* babel-node ./src/index",
 		"lint": "eslint src",
 		"lint:dev": "eslint --fix src",
 		"check-deps": "npm-check;exit 0",
@@ -30,8 +30,9 @@
 		"prod": "NODE_ENV=production npm run build && npm run start"
 	},
 	"dependencies": {
-		"@natlibfi/marc-record-serializers": "^5.0.1",
-		"@natlibfi/melinda-commons-js": "git+https://github.com/NatLibFi/melinda-commons-js.git#melkehitys-1541",
+		"@natlibfi/marc-record-serializers": "^7.1.6",
+		"@natlibfi/melinda-commons": "^11.1.1",
+		"@natlibfi/melinda-backend-commons": "2.0.2",
 		"@natlibfi/melinda-record-link-migration-commons": "git+https://github.com/NatLibFi/melinda-record-link-migration-commons.git#melkehitys-1117",
 		"@natlibfi/melinda-record-import-commons": "7.0.3",
 		"@natlibfi/sru-client": "^4.0.2",

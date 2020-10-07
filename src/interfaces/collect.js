@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import {Utils} from '@natlibfi/melinda-commons';
+import {createLogger} from '@natlibfi/melinda-backend-commons';
 import {getFromRecord} from '../util';
 import {getLinkedInfo} from './sru';
 import {MarcRecord} from '@natlibfi/marc-record';
@@ -8,7 +8,6 @@ import {COMMON_JOB_STATES, HARVESTER_JOB_STATES, VALIDATOR_JOB_STATES} from '@na
 
 export async function collect(jobId, jobConfig, mongoOperator, amqpOperator) {
   const setTimeoutPromise = promisify(setTimeout);
-  const {createLogger} = Utils;
   const logger = createLogger();
   const {hostRecord, linkDataHarvestSearch} = jobConfig;
   const marcRecord = new MarcRecord(hostRecord);
