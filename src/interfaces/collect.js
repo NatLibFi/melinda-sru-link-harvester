@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {createLogger} from '@natlibfi/melinda-backend-commons';
 import {getFromRecord} from '../util';
-import {getLinkedInfo} from './sru';
+import {sruOperator} from './sru';
 import {MarcRecord} from '@natlibfi/marc-record';
 import {format, promisify} from 'util';
 import {COMMON_JOB_STATES, HARVESTER_JOB_STATES, VALIDATOR_JOB_STATES} from '@natlibfi/melinda-record-link-migration-commons/dist/constants';
@@ -10,6 +10,7 @@ export async function collect(jobId, jobConfig, mongoOperator, amqpOperator) {
   const setTimeoutPromise = promisify(setTimeout);
   const logger = createLogger();
   const {hostRecord, linkDataHarvestSearch} = jobConfig;
+  const sruClient = await sruOperator(linkDataHarvestSearch.url);
   const marcRecord = new MarcRecord(hostRecord);
   await mongoOperator.setState({jobId, state: HARVESTER_JOB_STATES.PROCESSING_SRU_HARVESTING});
 
@@ -21,7 +22,7 @@ export async function collect(jobId, jobConfig, mongoOperator, amqpOperator) {
 
   logger.log('debug', 'Get link data');
   logger.log('debug', `Start offset: ${linkDataHarvestSearch.offset}`);
-  await pump(linkDataHarvestSearch.url, query, linkDataHarvestSearch.offset);
+  await pump(query, linkDataHarvestSearch.offset);
 
   await setTimeoutPromise(50); // Makes sure last record gets in amqp queue
 
@@ -35,8 +36,8 @@ export async function collect(jobId, jobConfig, mongoOperator, amqpOperator) {
   await mongoOperator.setState({jobId, state: VALIDATOR_JOB_STATES.PENDING_VALIDATION_FILTERING});
   return true;
 
-  async function pump(url, query, count = 1) {
-    const {offset, records} = await getLinkedInfo(url, query, count);
+  async function pump(query, count = 1) {
+    const {offset, records} = await sruClient.getRecords(query, count);
     logger.log('verbose', `Handling records ${count} - ${offset - 1}`);
 
     if (isNaN(offset) && records === undefined) {
@@ -53,7 +54,7 @@ export async function collect(jobId, jobConfig, mongoOperator, amqpOperator) {
       return;
     }
 
-    return pump(url, query, offset);
+    return pump(query, offset);
   }
 
   async function pumpToAmqp(records, jobId) {
