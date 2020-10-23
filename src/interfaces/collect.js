@@ -9,15 +9,16 @@ import {COMMON_JOB_STATES, HARVESTER_JOB_STATES, VALIDATOR_JOB_STATES} from '@na
 export async function collect(jobId, jobConfig, mongoOperator, amqpOperator) {
   const setTimeoutPromise = promisify(setTimeout);
   const logger = createLogger();
-  const {hostRecord, linkDataHarvestSearch} = jobConfig;
+  const {sourceRecord, linkDataHarvestSearch} = jobConfig;
   const sruClient = await sruOperator(linkDataHarvestSearch.url);
-  const marcRecord = new MarcRecord(hostRecord);
+  const marcRecord = new MarcRecord(sourceRecord);
   await mongoOperator.setState({jobId, state: HARVESTER_JOB_STATES.PROCESSING_SRU_HARVESTING});
 
   logger.log('info', 'Generating queries');
   const [queryValue] = getFromRecord(linkDataHarvestSearch.from, marcRecord);
   logger.log('debug', queryValue);
-  const query = format(linkDataHarvestSearch.queryFormat, queryValue);
+  const normalizedQueryValue = normalizeQuerys(queryValue);
+  const query = format(linkDataHarvestSearch.queryFormat, normalizedQueryValue);
   logger.log('debug', query);
 
   logger.log('debug', 'Get link data');
@@ -37,7 +38,14 @@ export async function collect(jobId, jobConfig, mongoOperator, amqpOperator) {
   return true;
 
   async function pump(query, count = 1) {
-    const {offset, records} = await sruClient.getRecords(query, count);
+    const result = await sruClient.getRecords(query, count);
+
+    if (result === false) { // In case of connection error
+      await setTimeoutPromise(5000);
+      return pump(query, count);
+    }
+
+    const {offset, records} = result;
     logger.log('verbose', `Handling records ${count} - ${offset - 1}`);
 
     if (isNaN(offset) && records === undefined) {
@@ -72,7 +80,7 @@ export async function collect(jobId, jobConfig, mongoOperator, amqpOperator) {
   function createUpdatedJobConfig(jobConfig, offset) {
     logger.log('debug', `Offset: ${offset}`);
     return {
-      hostRecord: jobConfig.hostRecord,
+      sourceRecord: jobConfig.sourceRecord,
       linkDataHarvestSearch: {
         type: jobConfig.linkDataHarvestSearch.type,
         from: jobConfig.linkDataHarvestSearch.from,
@@ -83,5 +91,13 @@ export async function collect(jobId, jobConfig, mongoOperator, amqpOperator) {
       linkDataHarvesterApiProfileId: jobConfig.linkDataHarvesterApiProfileId,
       linkDataHarvesterValidationFilters: jobConfig.linkDataHarvesterValidationFilters
     };
+  }
+
+  function normalizeQuerys(queryValue) {
+    return queryValue
+      .replace(/[^\w\s\p{Alphabetic}]/gu, '')
+      .trim()
+      .slice(0, 30)
+      .trim();
   }
 }

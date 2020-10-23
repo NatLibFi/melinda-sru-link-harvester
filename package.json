@@ -34,7 +34,7 @@
 		"@natlibfi/melinda-commons": "^11.1.1",
 		"@natlibfi/melinda-backend-commons": "2.0.2",
 		"@natlibfi/melinda-record-link-migration-commons": "git+https://github.com/NatLibFi/melinda-record-link-migration-commons.git#melkehitys-1117",
-		"@natlibfi/melinda-record-import-commons": "7.0.3",
+		"@natlibfi/melinda-record-import-commons": "^8.0.1",
 		"@natlibfi/sru-client": "^4.0.2",
 		"amqplib": ">=0.5.5 < 1.0.0",
 		"esm": "^3.2.25",

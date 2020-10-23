@@ -3,8 +3,6 @@ import {promisify} from 'util';
 import {createLogger} from '@natlibfi/melinda-backend-commons';
 import {collect} from './interfaces/collect';
 import {mongoFactory, HARVESTER_JOB_STATES, VALIDATOR_JOB_STATES, IMPORTER_JOB_STATES, amqpFactory} from '@natlibfi/melinda-record-link-migration-commons';
-import {validations} from './interfaces/validate';
-import {importToErätuonti} from './interfaces/eratuonti';
 
 export default async function ({
   apiUrl, apiUsername, apiPassword, apiClientUserAgent, mongoUrl, amqpUrl
@@ -25,16 +23,6 @@ export default async function ({
     }
 
     // If job state PROCESSING_SRU_HARVESTING => collect or , VALIDATING => validate or  => import continue it!
-
-    // SEPARATE TO MICROSERVICE IMPORTER?
-    // Import to erätuonti
-    await checkJobsInState(IMPORTER_JOB_STATES.PROCESSING_ERATUONTI_IMPORT);
-    await checkJobsInState(IMPORTER_JOB_STATES.PENDING_ERATUONTI_IMPORT);
-
-    // SEPARATE TO MICROSERVICE VALIDATOR?
-    // Validate and filter link data
-    await checkJobsInState(VALIDATOR_JOB_STATES.PROCESSING_VALIDATION_FILTERING);
-    await checkJobsInState(VALIDATOR_JOB_STATES.PENDING_VALIDATION_FILTERING);
 
     // Collect
     await checkJobsInState(HARVESTER_JOB_STATES.PROCESSING_SRU_HARVESTING);
@@ -59,18 +47,6 @@ export default async function ({
 
     // Real loop
     const {jobId, jobConfig} = job;
-
-    // Import linked data to Erätuonti
-    if (state === IMPORTER_JOB_STATES.PENDING_ERATUONTI_IMPORT || state === IMPORTER_JOB_STATES.PROCESSING_ERATUONTI_IMPORT) {
-      await importToErätuonti(jobId, jobConfig, mongoOperator, amqpOperator, eratuontiConfig);
-      return check(true);
-    }
-
-    // Validate potential link data
-    if (state === VALIDATOR_JOB_STATES.PENDING_VALIDATION_FILTERING || state === VALIDATOR_JOB_STATES.PROCESSING_VALIDATION_FILTERING) {
-      await validations(jobId, jobConfig, mongoOperator, amqpOperator);
-      return check();
-    }
 
     // Collect potential link data
     if (state === HARVESTER_JOB_STATES.PENDING_SRU_HARVESTER || state === HARVESTER_JOB_STATES.PROCESSING_SRU_HARVESTING) {

@@ -2,6 +2,7 @@
 import {createLogger} from '@natlibfi/melinda-backend-commons';
 import createSruClient from '@natlibfi/sru-client';
 import {MARCXML} from '@natlibfi/marc-record-serializers';
+import {logError} from '@natlibfi/melinda-record-link-migration-commons';
 
 export function sruOperator(sruUrl) {
   const logger = createLogger();
@@ -20,7 +21,11 @@ export function sruOperator(sruUrl) {
       return results;
     } catch (error) {
       logger.log('debug', 'Error while searching link data');
-      logger.log('error', error);
+      if (error.message === 'First record position out of range') {
+        logger.log('error', 'First record position out of range'); // eslint-disable-line no-console
+        return getRecords(query, offset - 50);
+      }
+      logError(error);
       return false;
     }
 
