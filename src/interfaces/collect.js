@@ -29,6 +29,8 @@ export async function collect(jobId, jobConfig, mongoOperator, amqpOperator) {
 
   const messages = await amqpOperator.checkQueue(`${VALIDATOR_JOB_STATES.PENDING_VALIDATION_FILTERING}.${jobId}`, 'messages');
   if (messages === 0 || !messages) {
+    logger.log('debug', JSON.stringify(messages));
+    await amqpOperator.removeQueue(`${VALIDATOR_JOB_STATES.PENDING_VALIDATION_FILTERING}.${jobId}`);
     await mongoOperator.setState({jobId, state: COMMON_JOB_STATES.DONE});
     return false;
   }
@@ -72,7 +74,9 @@ export async function collect(jobId, jobConfig, mongoOperator, amqpOperator) {
       return;
     }
 
-    await amqpOperator.sendToQueue({queue: `${VALIDATOR_JOB_STATES.PENDING_VALIDATION_FILTERING}.${jobId}`, correlationId: jobId, data: record});
+    const queue = `${VALIDATOR_JOB_STATES.PENDING_VALIDATION_FILTERING}.${jobId}`;
+    logger.log('silly', `Sending data to: ${queue}`);
+    await amqpOperator.sendToQueue({queue, correlationId: jobId, data: record});
 
     return pumpToAmqp(rest, jobId);
   }
